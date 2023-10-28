@@ -1,9 +1,16 @@
 {
-    "name": "open-southeners/packagist_package_here",
-    "description": "and_description_here",
+    "name": "open-southeners/byte-unit-converter",
+    "description": "A utility written in PHP8.1+ to convert multiple-byte units with no dependencies",
     "license": "MIT",
     "keywords": [
-        "open-southeners"
+        "open-southeners",
+        "bytes-conversion",
+        "frameworkless",
+        "dependencyless",
+        "conversion",
+        "utilities",
+        "tools",
+        "bytes"
     ],
     "authors": [
         {
@@ -19,33 +26,25 @@
         }
     ],
     "require": {
-        "php": "^8.0 || ^8.1 || ^8.2"
+        "php": "^8.1"
     },
     "require-dev": {
-        "nunomaduro/larastan": "^2.0",
-        "orchestra/testbench": "^7.0 || ^8.0",
+        "laravel/pint": "^1.13",
         "phpstan/phpstan": "^1.0",
-        "phpunit/phpunit": "^9.0 || ^10.0"
+        "phpunit/phpunit": "^10.0"
     },
     "minimum-stability": "dev",
     "autoload": {
         "psr-4": {
-            "OpenSoutheners\\PhpPackage\\": "src"
+            "OpenSoutheners\\ByteUnitConverter\\": "src"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "OpenSoutheners\\PhpPackage\\Tests\\": "tests"
+            "OpenSoutheners\\ByteUnitConverter\\Tests\\": "tests"
         }
     },
     "config": {
         "sort-packages": true
-    },
-    "extra": {
-        "laravel": {
-            "providers": [
-                "OpenSoutheners\\PhpPackage\\ServiceProvider"
-            ]
-        }
     }
 }
