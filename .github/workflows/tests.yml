@@ -39,7 +39,7 @@ jobs:
         run: composer install --prefer-dist --no-interaction --no-suggest
 
       - name: Execute tests
-        run: vendor/bin/phpunit -c phpunit.coverage.dist.xml
+        run: vendor/bin/phpunit -c phpunit-coverage.dist.xml
 
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
