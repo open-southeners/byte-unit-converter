@@ -607,7 +607,7 @@ class ByteUnitConverter
     public function __unserialize(array $data): void
     {
         $this->bytes = $data['bytes'];
-        $this->unit = ByteUnit::tryFrom($data['byte_unit']);
-        $this->dataUnit = DataUnit::tryFrom($data['data_unit']);
+        $this->unit = ByteUnit::from($data['byte_unit']);
+        $this->dataUnit = DataUnit::from($data['data_unit']);
     }
 }

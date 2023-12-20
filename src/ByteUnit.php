@@ -103,7 +103,7 @@ enum ByteUnit: string
     /**
      * Get metric system the byte unit is using.
      */
-    public function getMetric(): MetricSystem
+    public function getMetric(): ?MetricSystem
     {
         return $this->getAttribute()->metric;
     }
