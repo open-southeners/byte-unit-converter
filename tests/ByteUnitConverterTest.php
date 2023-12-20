@@ -1,116 +1,157 @@
 <?php
 
+declare(strict_types=1);
+
 namespace OpenSoutheners\ByteUnitConverter\Tests;
 
-use OpenSoutheners\ByteUnitConverter\BinaryByteUnit;
 use OpenSoutheners\ByteUnitConverter\ByteUnit;
 use OpenSoutheners\ByteUnitConverter\ByteUnitConverter;
-use OpenSoutheners\ByteUnitConverter\DecimalByteUnit;
 use PHPUnit\Framework\TestCase;
 
-enum MyOwnByteUnit: int implements ByteUnit
+enum MyOwnByteUnit: string
 {
-    case GB = 1;
+    case GB = '1';
 }
 
 class ByteUnitConverterTest extends TestCase
 {
-    public function testGetBaseFromBinaryByteUnitEqualsBase2()
+    public function testNewInstanceUsingNotNumericStringThrowsException()
     {
-        $this->assertEquals(1024, ByteUnitConverter::baseFromUnit(BinaryByteUnit::GiB));
-    }
+        $this->expectExceptionObject(new \Exception('Not numeric value as bytes not supported.'));
 
-    public function testGetBaseFromDecimalByteUnitEqualsBase10()
-    {
-        $this->assertEquals(1000, ByteUnitConverter::baseFromUnit(DecimalByteUnit::GB));
-    }
-
-    public function testGetBaseFromUnknownClassUsingInterfaceWillThrowException()
-    {
-        $this->expectExceptionObject(new \Exception('Byte unit class not supported by ByteUnitConverted.'));
-
-        ByteUnitConverter::baseFromUnit(MyOwnByteUnit::GB);
+        ByteUnitConverter::new('hello 12 worlds');
     }
 
     public function testFromMethodReturnsSelfInstance()
     {
-        $this->assertInstanceOf(ByteUnitConverter::class, ByteUnitConverter::from(1, BinaryByteUnit::GiB));
+        $this->assertInstanceOf(ByteUnitConverter::class, ByteUnitConverter::from('1', ByteUnit::GiB));
     }
 
     public function testConversionBetweenBinaryByteUnits()
     {
-        $this->assertEquals(1024, ByteUnitConverter::conversion(1, BinaryByteUnit::MiB, BinaryByteUnit::KiB));
-        $this->assertEquals(1, ByteUnitConverter::conversion(1024, BinaryByteUnit::KiB, BinaryByteUnit::MiB));
-        $this->assertEquals(0.0009765625, ByteUnitConverter::conversion(1, BinaryByteUnit::KiB, BinaryByteUnit::MiB));
+        $this->assertEquals('1024', ByteUnitConverter::from('1', ByteUnit::MiB)->to(ByteUnit::KiB)->asRound()->getValue());
+        $this->assertEquals('1', ByteUnitConverter::from('1024', ByteUnit::KiB)->to(ByteUnit::MiB)->asRound()->getValue());
+        $this->assertEquals('0.0009765625', ByteUnitConverter::from('1', ByteUnit::KiB)->to(ByteUnit::MiB)->setPrecision(10)->getValue());
 
-        $instance = new ByteUnitConverter(1099511627776);
+        $bytes = '1099511627776';
 
-        $this->assertEquals(8.673617379884035E-19, $instance->toQiB());
-        $this->assertEquals(8.881784197001252E-16, $instance->toRiB());
-        $this->assertEquals(9.094947017729282E-13, $instance->toYiB());
-        $this->assertEquals(9.313225746154785E-10, $instance->toZiB());
-        $this->assertEquals(9.5367431640625E-7, $instance->toEiB());
-        $this->assertEquals(0.0009765625, $instance->toPiB());
-        $this->assertEquals(1, $instance->toTiB());
-        $this->assertEquals(1024, $instance->toGiB());
-        $this->assertEquals(1048576, $instance->toMiB());
-        $this->assertEquals(1073741824, $instance->toKiB());
+        $this->assertEquals('0.0000000000000000008673617381445643', ByteUnitConverter::new($bytes)->setPrecision(34)->toQiB()->getValue());
+        $this->assertEquals('0.0000000000000008881784191874108', ByteUnitConverter::new($bytes)->setPrecision(31)->toRiB()->getValue());
+        $this->assertEquals('0.0000000000009094947014830074', ByteUnitConverter::new($bytes)->setPrecision(28)->toYiB()->getValue());
+        $this->assertEquals('0.0000000009313225751814163', ByteUnitConverter::new($bytes)->setPrecision(25)->toZiB()->getValue());
+        $this->assertEquals('0.00000095367432021694', ByteUnitConverter::new($bytes)->setPrecision(20)->toEiB()->getValue());
+        $this->assertEquals('0.0009765624', ByteUnitConverter::new($bytes)->setPrecision(10)->toPiB()->getValue());
+        $this->assertEquals('1', ByteUnitConverter::new($bytes)->toTiB()->asRound()->getValue());
+        $this->assertEquals('1024', ByteUnitConverter::new($bytes)->toGiB()->asRound()->getValue());
+        $this->assertEquals('1048576', ByteUnitConverter::new($bytes)->toMiB()->asRound()->getValue());
+        $this->assertEquals('1073741824', ByteUnitConverter::new($bytes)->toKiB()->asRound()->getValue());
     }
 
     public function testConversionBetweenDecimalByteUnits()
     {
-        $this->assertEquals(1000, ByteUnitConverter::conversion(1, DecimalByteUnit::MB, DecimalByteUnit::KB));
-        $this->assertEquals(1, ByteUnitConverter::conversion(1000, DecimalByteUnit::KB, DecimalByteUnit::MB));
-        $this->assertEquals(0.001, ByteUnitConverter::conversion(1, DecimalByteUnit::KB, DecimalByteUnit::MB));
+        $this->assertEquals('1000', ByteUnitConverter::from('1', ByteUnit::MB)->to(ByteUnit::KB)->asRound()->getValue());
+        $this->assertEquals('1', ByteUnitConverter::from('1000', ByteUnit::KB)->to(ByteUnit::MB)->asRound()->getValue());
+        $this->assertEquals('0.001', ByteUnitConverter::from('1', ByteUnit::KB)->to(ByteUnit::MB)->setPrecision(3)->getValue());
 
-        $instance = new ByteUnitConverter(1000000000000);
+        $bytes = '1000000000000';
 
-        $this->assertEquals(1.0E-18, $instance->toQB());
-        $this->assertEquals(1.0E-15, $instance->toRB());
-        $this->assertEquals(1.0E-12, $instance->toYB());
-        $this->assertEquals(1.0E-9, $instance->toZB());
-        $this->assertEquals(1.0E-6, $instance->toEB());
-        $this->assertEquals(0.001, $instance->toPB());
-        $this->assertEquals(1, $instance->toTB());
-        $this->assertEquals(1000, $instance->toGB());
-        $this->assertEquals(1000000, $instance->toMB());
-        $this->assertEquals(1000000000, $instance->toKB());
+        $this->assertEquals('0.0000000000000000009', ByteUnitConverter::new($bytes)->toQB()->setPrecision(19)->getValue());
+        $this->assertEquals('0.0000000000000009', ByteUnitConverter::new($bytes)->toRB()->setPrecision(16)->getValue());
+        $this->assertEquals('0.0000000000010', ByteUnitConverter::new($bytes)->toYB()->setPrecision(13)->getValue());
+        $this->assertEquals('0.0000000010', ByteUnitConverter::new($bytes)->toZB()->setPrecision(10)->getValue());
+        $this->assertEquals('0.0000010', ByteUnitConverter::new($bytes)->toEB()->setPrecision(7)->getValue());
+        $this->assertEquals('0.001', ByteUnitConverter::new($bytes)->toPB()->setPrecision(3)->getValue());
+        $this->assertEquals('1', ByteUnitConverter::new($bytes)->toTB()->asRound()->getValue());
+        $this->assertEquals('1000', ByteUnitConverter::new($bytes)->toGB()->asRound()->getValue());
+        $this->assertEquals('1000000', ByteUnitConverter::new($bytes)->toMB()->asRound()->getValue());
+        $this->assertEquals('1000000000', ByteUnitConverter::new($bytes)->toKB()->asRound()->getValue());
     }
 
     public function testConversionBetweenDifferentMetricSystems()
     {
-        $this->assertEquals(1048.576, ByteUnitConverter::conversion(1, BinaryByteUnit::MiB, DecimalByteUnit::KB));
-        $this->assertEquals(1.024, ByteUnitConverter::conversion(1000, BinaryByteUnit::KiB, DecimalByteUnit::MB));
-        $this->assertEquals(1.048576, ByteUnitConverter::conversion(1024, BinaryByteUnit::KiB, DecimalByteUnit::MB));
+        $this->assertEquals('1048.57', ByteUnitConverter::from('1', ByteUnit::MiB)->to(ByteUnit::KB)->getValue());
+        $this->assertEquals('1.02', ByteUnitConverter::from('1000', ByteUnit::KiB)->to(ByteUnit::MB)->getValue());
+        $this->assertEquals('1.04', ByteUnitConverter::from('1024', ByteUnit::KiB)->to(ByteUnit::MB)->getValue());
     }
 
     public function testToBitsFromOneByteEquals8()
     {
         $this->assertEquals(
-            8,
-            ByteUnitConverter::toBitsFromUnit(1, BinaryByteUnit::B)
+            '8',
+            ByteUnitConverter::from('1', ByteUnit::B)->usingBits()->getValue()
         );
     }
 
     public function testToBytesFromOneByteEqualsSame()
     {
         $this->assertEquals(
-            1,
-            ByteUnitConverter::toBytesFromUnit(1, BinaryByteUnit::B)
+            '1',
+            ByteUnitConverter::from('1', ByteUnit::B)->usingBytes()->getValue()
         );
     }
 
-    public function testToBytesFromFloatAsByteUnitThrowsException()
+    public function testConversionToStringSerializesResultWithUnitAppended()
     {
-        $this->expectExceptionObject(new \Exception('Bytes cannot be a float unit.'));
+        $this->assertEquals(
+            '1 KiB',
+            (string) ByteUnitConverter::new('1024')->asRound()->toKiB()
+        );
 
-        ByteUnitConverter::toBytesFromUnit(0.1, BinaryByteUnit::B);
+        $this->assertEquals(
+            '8 KiB',
+            (string) ByteUnitConverter::new('1024')->asRound()->usingBits()->toKiB()
+        );
     }
 
-    public function testToBitsFromFloatAsByteUnitThrowsException()
+    public function testConversionToStringUsingUnitLabelSerializesResultWithUnitLabelAppended()
     {
-        $this->expectExceptionObject(new \Exception('Bytes cannot be a float unit.'));
+        $this->assertEquals(
+            '1 kibibyte',
+            (string) ByteUnitConverter::new('1024')->useUnitLabel()->asRound()->toKiB()
+        );
 
-        ByteUnitConverter::toBitsFromUnit(0.1, BinaryByteUnit::B);
+        $this->assertEquals(
+            '8 kibibits',
+            (string) ByteUnitConverter::new('1024')->useUnitLabel()->asRound()->usingBits()->toKiB()
+        );
+    }
+
+    public function testConversionToStringSerializesResultWithBitsUnitAppendedWhenFromBaseUnit()
+    {
+        $this->assertEquals(
+            '8192 b',
+            (string) ByteUnitConverter::new('1024')->asRound()->usingBits()
+        );
+    }
+
+    public function testConversionToStringSerializesResultWithBytesUnitAppendedWhenFromBaseUnit()
+    {
+        $this->assertEquals(
+            '1024 B',
+            (string) ByteUnitConverter::new('1024')->asRound()->usingBytes()
+        );
+    }
+
+    public function testConversionToArraySerializesResultToArrayWithUnitAndValue()
+    {
+        $this->assertEquals(
+            [
+                'unit' => 'KiB',
+                'unit_label' => 'kibibytes',
+                'value' => '1',
+            ],
+            ByteUnitConverter::new('1024')->asRound()->toKiB()->toArray()
+        );
+    }
+
+    public function testConversionSerializesObjectInstance()
+    {
+        $instance = ByteUnitConverter::new('1024')->asRound()->toKiB();
+
+        $data = serialize($instance);
+
+        $deserialized = unserialize($data);
+
+        $this->assertEquals((string) $instance, (string) $deserialized->asRound());
     }
 }

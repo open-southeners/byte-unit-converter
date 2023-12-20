@@ -2,46 +2,73 @@
 
 namespace OpenSoutheners\ByteUnitConverter\Tests;
 
-use OpenSoutheners\ByteUnitConverter\BinaryByteUnit;
-use OpenSoutheners\ByteUnitConverter\DecimalByteUnit;
+use OpenSoutheners\ByteUnitConverter\ByteUnit;
+use OpenSoutheners\ByteUnitConverter\MetricSystem;
 use PHPUnit\Framework\TestCase;
 
 class ByteUnitTest extends TestCase
 {
+    public function testGigabyteLowerThanTerabyteReturnsFalse()
+    {
+        $this->assertFalse(ByteUnit::TB->lowerThan(ByteUnit::GB));
+    }
+
+    public function testGibibyteLowerThanTerabyteReturnsFalse()
+    {
+        $this->assertFalse(ByteUnit::TiB->lowerThan(ByteUnit::GiB));
+    }
+
     public function testGigabyteHigherThanTerabyteReturnsFalse()
     {
-        $this->assertFalse(DecimalByteUnit::GB->higherThan(DecimalByteUnit::TB));
+        $this->assertFalse(ByteUnit::GB->higherThan(ByteUnit::TB));
     }
 
     public function testGibibyteHigherThanTerabyteReturnsFalse()
     {
-        $this->assertFalse(BinaryByteUnit::GiB->higherThan(DecimalByteUnit::TB));
+        $this->assertFalse(ByteUnit::GiB->higherThan(ByteUnit::TB));
     }
 
     public function testGigabyteHigherThanGigabyteReturnsFalse()
     {
-        $this->assertFalse(DecimalByteUnit::GB->higherThan(DecimalByteUnit::GB));
+        $this->assertFalse(ByteUnit::GB->higherThan(ByteUnit::GB));
     }
 
-    public function testGibibyteHigherThanGigabyteReturnsFalse()
+    public function testGigabyteHigherThanGibibyteReturnsFalse()
     {
-        $this->assertFalse(BinaryByteUnit::GiB->higherThan(DecimalByteUnit::GB));
+        $this->assertFalse(ByteUnit::GB->higherThan(ByteUnit::GiB));
     }
 
     public function testTerabyteHigherThanGigabyteReturnsTrue()
     {
-        $this->assertTrue(DecimalByteUnit::TB->higherThan(DecimalByteUnit::GB));
+        $this->assertTrue(ByteUnit::TB->higherThan(ByteUnit::GB));
+    }
+
+    public function testGigabyteLowerThanTerabyteReturnsTrue()
+    {
+        $this->assertTrue(ByteUnit::GB->lowerThan(ByteUnit::TB));
     }
 
     public function testTerabyteToGigabyteReturnsOneAsPositiveNumber()
     {
-        $this->assertIsNumeric(DecimalByteUnit::TB->toUnit(DecimalByteUnit::GB));
-        $this->assertEquals(1, DecimalByteUnit::TB->toUnit(DecimalByteUnit::GB));
+        $this->assertIsNumeric(ByteUnit::TB->toUnit(ByteUnit::GB));
+        $this->assertEquals(1, ByteUnit::TB->toUnit(ByteUnit::GB));
     }
 
     public function testGigabyteToTerabyteReturnsOneAsNegativeNumber()
     {
-        $this->assertIsNumeric(DecimalByteUnit::GB->toUnit(DecimalByteUnit::TB));
-        $this->assertEquals(-1, DecimalByteUnit::GB->toUnit(DecimalByteUnit::TB));
+        $this->assertIsNumeric(ByteUnit::GB->toUnit(ByteUnit::TB));
+        $this->assertEquals(-1, ByteUnit::GB->toUnit(ByteUnit::TB));
+    }
+
+    public function testGigabyteAsNumberReturnsNumericStringWithoutExponentSign()
+    {
+        $this->assertStringContainsString('e', ByteUnit::GB->value);
+        $this->assertStringNotContainsString('e', ByteUnit::GB->asNumber());
+    }
+
+    public function testByteUnitGetMetricGetsMetricSystemUsedByUnit()
+    {
+        $this->assertEquals(MetricSystem::Decimal, ByteUnit::GB->getMetric());
+        $this->assertEquals(MetricSystem::Binary, ByteUnit::GiB->getMetric());
     }
 }

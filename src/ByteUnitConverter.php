@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace OpenSoutheners\ByteUnitConverter;
 
 /**
@@ -13,25 +15,37 @@ namespace OpenSoutheners\ByteUnitConverter;
  */
 class ByteUnitConverter
 {
-    final public function __construct(private readonly int $bytes)
+    private ByteUnit $unit = ByteUnit::B;
+
+    private DataUnit $dataUnit = DataUnit::B;
+
+    private int $precision = 2;
+
+    private bool $outputAsRoundNumber = false;
+
+    private bool $unitLabelAsOutput = false;
+
+    final public function __construct(private readonly string $bytes)
     {
-        //
+        if (! is_numeric($bytes)) {
+            throw new \Exception('Not numeric value as bytes not supported.');
+        }
+    }
+
+    /**
+     * Create new instance.
+     */
+    public static function new(string $bytes): static
+    {
+        return new static($bytes);
     }
 
     /**
      * Start converting from specified byte count & unit.
      */
-    public static function from(int|float $value, ByteUnit $unit): static
+    public static function from(string $value, ByteUnit $unit, int $precision = 2): static
     {
-        return new static(static::toBytesFromUnit($value, $unit));
-    }
-
-    /**
-     * Do conversion between two byte units.
-     */
-    public static function conversion(int|float $value, ByteUnit $fromUnit, ByteUnit $toUnit): int|float
-    {
-        return (new static(static::toBytesFromUnit($value, $fromUnit)))->to($toUnit);
+        return new static(static::toBytesFromUnit($value, $unit, $precision));
     }
 
     /**
@@ -39,54 +53,104 @@ class ByteUnitConverter
      *
      * @throws \Exception
      */
-    public static function toBytesFromUnit(int|float $value, ByteUnit $unit): int
+    public static function toBytesFromUnit(string $value, ByteUnit $unit, int $precision = 2): string
     {
-        if (is_float($value) && $unit->value === 0) {
-            throw new \Exception('Bytes cannot be a float unit.');
-        }
-
         // saves the noop on bytes from any metric system
-        if ($unit->value === 0) {
-            return (int) $value;
+        if ($unit->value === '1') {
+            return $value;
         }
 
-        return (int) $value * pow(static::baseFromUnit($unit), $unit->value);
+        return bcmul(
+            number_format((float) $value, 0, '.', ''),
+            $unit->asNumber(),
+            $precision
+        );
     }
 
     /**
-     * Converts from specified unit to bits.
+     * Set decimal precision for all conversions.
      */
-    public static function toBitsFromUnit(int|float $value, ByteUnit $unit): int
+    public function setPrecision(int $precision): self
     {
-        return self::toBytesFromUnit($value, $unit) * 8;
+        $this->precision = $precision;
+
+        return $this;
     }
 
     /**
-     * Get numeric base used for make conversion between byte units.
+     * Round resulting bytes number to have no decimal digits.
      */
-    public static function baseFromUnit(ByteUnit $unit): int
+    public function asRound(bool $value = true): self
     {
-        return match (get_class($unit)) {
-            DecimalByteUnit::class => 1000,
-            BinaryByteUnit::class => 1024,
-            default => throw new \Exception('Byte unit class not supported by ByteUnitConverted.'),
-        };
+        $this->outputAsRoundNumber = $value;
+
+        return $this;
+    }
+
+    /**
+     * Use byte unit full name instead.
+     *
+     * For e.g. "1 GiB" to "1 gibibyte".
+     */
+    public function useUnitLabel(bool $value = true): self
+    {
+        $this->unitLabelAsOutput = $value;
+
+        return $this;
+    }
+
+    /**
+     * Get conversion result numeric value.
+     */
+    public function getValue(): string
+    {
+        $value = bcmul($this->dataUnit->value, number_format((float) $this->bytes, 0, '.', ''), 0);
+
+        $value = bcdiv($value, $this->unit->asNumber(), $this->precision);
+
+        return number_format(
+            num: (float) $value,
+            decimals: $this->outputAsRoundNumber ? 0 : (int) strpos(strrev($value), '.'),
+            thousands_separator: ''
+        );
+    }
+
+    /**
+     * Get conversion result unit.
+     */
+    public function getUnit(bool $plural = false, bool $forceLabel = false): string
+    {
+        if (! $forceLabel && ! $this->unitLabelAsOutput) {
+            return $this->dataUnit === DataUnit::b && $this->unit === ByteUnit::B
+                ? DataUnit::b->name
+                : $this->unit->name;
+        }
+
+        $baseUnit = $this->unit->getPrefix().$this->dataUnit->getLabel();
+
+        if ($plural) {
+            $baseUnit .= 's';
+        }
+
+        return $baseUnit;
     }
 
     /**
      * Convert unit to desired unit.
      */
-    public function to(ByteUnit $unit): int|float
+    public function to(ByteUnit $unit): self
     {
-        return $this->bytes / pow(static::baseFromUnit($unit), $unit->value);
+        $this->unit = $unit;
+
+        return $this;
     }
 
     /**
      * Convert unit to quettabyte.
      */
-    public function toQB(): int|float
+    public function toQB(): self
     {
-        return $this->to(DecimalByteUnit::QB);
+        return $this->to(ByteUnit::QB);
     }
 
     /**
@@ -96,7 +160,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toQuettabyte(): int|float
+    public function toQuettabyte(): self
     {
         return $this->toQB();
     }
@@ -104,9 +168,9 @@ class ByteUnitConverter
     /**
      * Convert unit to quebibyte.
      */
-    public function toQiB(): int|float
+    public function toQiB(): self
     {
-        return $this->to(BinaryByteUnit::QiB);
+        return $this->to(ByteUnit::QiB);
     }
 
     /**
@@ -116,7 +180,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toQuebibyte(): int|float
+    public function toQuebibyte(): self
     {
         return $this->toQiB();
     }
@@ -124,9 +188,9 @@ class ByteUnitConverter
     /**
      * Convert unit to ronnabyte.
      */
-    public function toRB(): int|float
+    public function toRB(): self
     {
-        return $this->to(DecimalByteUnit::RB);
+        return $this->to(ByteUnit::RB);
     }
 
     /**
@@ -136,7 +200,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toRonnabyte(): int|float
+    public function toRonnabyte(): self
     {
         return $this->toRB();
     }
@@ -144,9 +208,9 @@ class ByteUnitConverter
     /**
      * Convert unit to robibyte.
      */
-    public function toRiB(): int|float
+    public function toRiB(): self
     {
-        return $this->to(BinaryByteUnit::RiB);
+        return $this->to(ByteUnit::RiB);
     }
 
     /**
@@ -156,7 +220,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toRobibyte(): int|float
+    public function toRobibyte(): self
     {
         return $this->toRiB();
     }
@@ -164,9 +228,9 @@ class ByteUnitConverter
     /**
      * Convert unit to yettabyte.
      */
-    public function toYB(): int|float
+    public function toYB(): self
     {
-        return $this->to(DecimalByteUnit::YB);
+        return $this->to(ByteUnit::YB);
     }
 
     /**
@@ -176,7 +240,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toYettabyte(): int|float
+    public function toYettabyte(): self
     {
         return $this->toYB();
     }
@@ -184,9 +248,9 @@ class ByteUnitConverter
     /**
      * Convert unit to yebibyte.
      */
-    public function toYiB(): int|float
+    public function toYiB(): self
     {
-        return $this->to(BinaryByteUnit::YiB);
+        return $this->to(ByteUnit::YiB);
     }
 
     /**
@@ -196,7 +260,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toYebibyte(): int|float
+    public function toYebibyte(): self
     {
         return $this->toYiB();
     }
@@ -204,9 +268,9 @@ class ByteUnitConverter
     /**
      * Convert unit to zettabyte.
      */
-    public function toZB(): int|float
+    public function toZB(): self
     {
-        return $this->to(DecimalByteUnit::ZB);
+        return $this->to(ByteUnit::ZB);
     }
 
     /**
@@ -216,7 +280,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toZettabyte(): int|float
+    public function toZettabyte(): self
     {
         return $this->toZB();
     }
@@ -224,9 +288,9 @@ class ByteUnitConverter
     /**
      * Convert unit to zebibyte.
      */
-    public function toZiB(): int|float
+    public function toZiB(): self
     {
-        return $this->to(BinaryByteUnit::ZiB);
+        return $this->to(ByteUnit::ZiB);
     }
 
     /**
@@ -236,7 +300,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toZebibyte(): int|float
+    public function toZebibyte(): self
     {
         return $this->toZiB();
     }
@@ -244,9 +308,9 @@ class ByteUnitConverter
     /**
      * Convert unit to exabyte.
      */
-    public function toEB(): int|float
+    public function toEB(): self
     {
-        return $this->to(DecimalByteUnit::EB);
+        return $this->to(ByteUnit::EB);
     }
 
     /**
@@ -256,7 +320,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toExabyte(): int|float
+    public function toExabyte(): self
     {
         return $this->toEB();
     }
@@ -264,9 +328,9 @@ class ByteUnitConverter
     /**
      * Convert unit to exbibyte.
      */
-    public function toEiB(): int|float
+    public function toEiB(): self
     {
-        return $this->to(BinaryByteUnit::EiB);
+        return $this->to(ByteUnit::EiB);
     }
 
     /**
@@ -276,7 +340,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toExbibyte(): int|float
+    public function toExbibyte(): self
     {
         return $this->toEiB();
     }
@@ -284,9 +348,9 @@ class ByteUnitConverter
     /**
      * Convert unit to petabyte.
      */
-    public function toPB(): int|float
+    public function toPB(): self
     {
-        return $this->to(DecimalByteUnit::PB);
+        return $this->to(ByteUnit::PB);
     }
 
     /**
@@ -296,7 +360,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toPetabyte(): int|float
+    public function toPetabyte(): self
     {
         return $this->toPB();
     }
@@ -304,9 +368,9 @@ class ByteUnitConverter
     /**
      * Convert unit to petabyte.
      */
-    public function toPiB(): int|float
+    public function toPiB(): self
     {
-        return $this->to(BinaryByteUnit::PiB);
+        return $this->to(ByteUnit::PiB);
     }
 
     /**
@@ -316,7 +380,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toPebibyte(): int|float
+    public function toPebibyte(): self
     {
         return $this->toPiB();
     }
@@ -324,9 +388,9 @@ class ByteUnitConverter
     /**
      * Convert unit to terabyte.
      */
-    public function toTB(): int|float
+    public function toTB(): self
     {
-        return $this->to(DecimalByteUnit::TB);
+        return $this->to(ByteUnit::TB);
     }
 
     /**
@@ -336,7 +400,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toTerabyte(): int|float
+    public function toTerabyte(): self
     {
         return $this->toTB();
     }
@@ -344,9 +408,9 @@ class ByteUnitConverter
     /**
      * Convert unit to tebibyte.
      */
-    public function toTiB(): int|float
+    public function toTiB(): self
     {
-        return $this->to(BinaryByteUnit::TiB);
+        return $this->to(ByteUnit::TiB);
     }
 
     /**
@@ -356,7 +420,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toTebibyte(): int|float
+    public function toTebibyte(): self
     {
         return $this->toTiB();
     }
@@ -364,9 +428,9 @@ class ByteUnitConverter
     /**
      * Convert unit to gigabyte.
      */
-    public function toGB(): int|float
+    public function toGB(): self
     {
-        return $this->to(DecimalByteUnit::GB);
+        return $this->to(ByteUnit::GB);
     }
 
     /**
@@ -376,7 +440,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toGigabyte(): int|float
+    public function toGigabyte(): self
     {
         return $this->toGB();
     }
@@ -384,9 +448,9 @@ class ByteUnitConverter
     /**
      * Convert unit to gibibyte.
      */
-    public function toGiB(): int|float
+    public function toGiB(): self
     {
-        return $this->to(BinaryByteUnit::GiB);
+        return $this->to(ByteUnit::GiB);
     }
 
     /**
@@ -396,7 +460,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toGibibyte(): int|float
+    public function toGibibyte(): self
     {
         return $this->toGiB();
     }
@@ -404,9 +468,9 @@ class ByteUnitConverter
     /**
      * Convert unit to megabyte.
      */
-    public function toMB(): int|float
+    public function toMB(): self
     {
-        return $this->to(DecimalByteUnit::MB);
+        return $this->to(ByteUnit::MB);
     }
 
     /**
@@ -416,7 +480,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toMegabyte(): int|float
+    public function toMegabyte(): self
     {
         return $this->toMB();
     }
@@ -424,9 +488,9 @@ class ByteUnitConverter
     /**
      * Convert unit to mebibyte.
      */
-    public function toMiB(): int|float
+    public function toMiB(): self
     {
-        return $this->to(BinaryByteUnit::MiB);
+        return $this->to(ByteUnit::MiB);
     }
 
     /**
@@ -436,7 +500,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toMebibyte(): int|float
+    public function toMebibyte(): self
     {
         return $this->toMiB();
     }
@@ -444,9 +508,9 @@ class ByteUnitConverter
     /**
      * Convert unit to kilobyte.
      */
-    public function toKB(): int|float
+    public function toKB(): self
     {
-        return $this->to(DecimalByteUnit::KB);
+        return $this->to(ByteUnit::KB);
     }
 
     /**
@@ -456,7 +520,7 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toKilobyte(): int|float
+    public function toKilobyte(): self
     {
         return $this->toKB();
     }
@@ -464,9 +528,9 @@ class ByteUnitConverter
     /**
      * Convert unit to kibibyte.
      */
-    public function toKiB(): int|float
+    public function toKiB(): self
     {
-        return $this->to(BinaryByteUnit::KiB);
+        return $this->to(ByteUnit::KiB);
     }
 
     /**
@@ -476,8 +540,74 @@ class ByteUnitConverter
      *
      * @codeCoverageIgnore
      */
-    public function toKibibyte(): int|float
+    public function toKibibyte(): self
     {
         return $this->toKiB();
+    }
+
+    /**
+     * Convert unit to bytes.
+     */
+    public function usingBytes(): self
+    {
+        $this->dataUnit = DataUnit::B;
+
+        return $this->asRound();
+    }
+
+    /**
+     * Convert unit to bits.
+     */
+    public function usingBits(): self
+    {
+        $this->dataUnit = DataUnit::b;
+
+        return $this->asRound();
+    }
+
+    /**
+     * Serialise result to string with unit name appended.
+     */
+    public function __toString(): string
+    {
+        $value = $this->getValue();
+
+        return "{$value} ".$this->getUnit($value > 1);
+    }
+
+    /**
+     * Serialise result to array.
+     */
+    public function toArray(): array
+    {
+        $value = $this->getValue();
+
+        return [
+            'unit' => $this->unit->name,
+            'unit_label' => $this->getUnit($value > 0, true),
+            'value' => $value,
+        ];
+    }
+
+    /**
+     * Serialise object instance into string.
+     */
+    public function __serialize(): array
+    {
+        return [
+            'bytes' => $this->bytes,
+            'byte_unit' => $this->unit->value,
+            'data_unit' => $this->dataUnit->value,
+        ];
+    }
+
+    /**
+     * Deserialize string into object instance.
+     */
+    public function __unserialize(array $data): void
+    {
+        $this->bytes = $data['bytes'];
+        $this->unit = ByteUnit::tryFrom($data['byte_unit']);
+        $this->dataUnit = DataUnit::tryFrom($data['data_unit']);
     }
 }
