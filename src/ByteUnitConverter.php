@@ -110,7 +110,7 @@ class ByteUnitConverter
 
         return number_format(
             num: (float) $value,
-            decimals: $this->outputAsRoundNumber ? 0 : (int) strpos(strrev($value), '.'),
+            decimals: $this->unit === ByteUnit::B || $this->outputAsRoundNumber ? 0 : (int) strpos(strrev($value), '.'),
             thousands_separator: ''
         );
     }
