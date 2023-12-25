@@ -154,4 +154,12 @@ class ByteUnitConverterTest extends TestCase
 
         $this->assertEquals((string) $instance, (string) $deserialized->asRound());
     }
+
+    public function testConversionToBytesDoesNotGiveDecimals()
+    {
+        $this->assertEquals(
+            '1000 B',
+            (string) ByteUnitConverter::new('1000')
+        );
+    }
 }
