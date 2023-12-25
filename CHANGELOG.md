@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2023-12-25
+
+### Fixed
+
+- Conversion to bytes doesn't give decimals
+
 ## [2.0.0] - 2023-12-19
 
 ### Added
