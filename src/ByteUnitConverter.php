@@ -100,6 +100,35 @@ class ByteUnitConverter
     }
 
     /**
+     * Assign nearest bytes unit by metric system from current bytes value.
+     */
+    public function nearestUnit(?MetricSystem $metric = MetricSystem::Decimal, ByteUnit $stoppingAt = null): self
+    {
+        $nearestUnit = null;
+        $byteUnits = ByteUnit::cases();
+        $i = 0;
+
+        while (! $nearestUnit && $i < count($byteUnits)) {
+            $unit = $byteUnits[$i];
+            $unitMetricSystem = $unit->getMetric();
+
+            $i++;
+
+            if (! $unitMetricSystem || $unitMetricSystem !== $metric) {
+                continue;
+            }
+
+            if ($unit === $stoppingAt || ($this->bytes - $unit->value) >= 0) {
+                $nearestUnit = $unit;
+            }
+        }
+
+        $this->unit = $nearestUnit ?? ByteUnit::B;
+
+        return $this;
+    }
+
+    /**
      * Get conversion result numeric value.
      */
     public function getValue(): string

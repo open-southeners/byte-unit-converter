@@ -6,6 +6,7 @@ namespace OpenSoutheners\ByteUnitConverter\Tests;
 
 use OpenSoutheners\ByteUnitConverter\ByteUnit;
 use OpenSoutheners\ByteUnitConverter\ByteUnitConverter;
+use OpenSoutheners\ByteUnitConverter\MetricSystem;
 use PHPUnit\Framework\TestCase;
 
 enum MyOwnByteUnit: string
@@ -160,6 +161,34 @@ class ByteUnitConverterTest extends TestCase
         $this->assertEquals(
             '1000 B',
             (string) ByteUnitConverter::new('1000')
+        );
+    }
+
+    public function testConversionToNearestUnitPrintsConvertedByteUnitAndMetricSystem()
+    {
+        $this->assertEquals(
+            '1.00 KB',
+            (string) ByteUnitConverter::new('1000')->nearestUnit()
+        );
+
+        $this->assertEquals(
+            '1.02 KB',
+            (string) ByteUnitConverter::new('1024')->nearestUnit()
+        );
+
+        $this->assertEquals(
+            '1.00 KiB',
+            (string) ByteUnitConverter::new('1024')->nearestUnit(MetricSystem::Binary)
+        );
+
+        $this->assertEquals(
+            '1000 B',
+            (string) ByteUnitConverter::new('1000')->nearestUnit(MetricSystem::Binary)
+        );
+
+        $this->assertEquals(
+            '0.97 KiB',
+            (string) ByteUnitConverter::new('1000')->nearestUnit(MetricSystem::Binary, ByteUnit::KiB)
         );
     }
 }
