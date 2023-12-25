@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2023-12-25
+
+### Added
+
+- `ByteUnitConverter::nearestUnit()` method to convert to nearest byte unit (and metric system):
+
+```php
+(string) ByteUnitConverter::new("1024")->nearestUnit(MetricSystem::Binary); // 1 KiB
+(string) ByteUnitConverter::new("500")->nearestUnit(stoppingAt: ByteUnit::KB); // 0.50 KB
+```
+
 ## [2.0.1] - 2023-12-25
 
 ### Fixed
