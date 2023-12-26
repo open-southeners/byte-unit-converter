@@ -11,35 +11,7 @@ composer require open-southeners/byte-unit-converter
 
 ### Usage
 
-**Before start using this package first familiarice with the concept of [multi-byte unit](https://en.wikipedia.org/wiki/Byte#Multiple-byte_units)**.
-
-Example usage:
-
-```php
-<?php
-
-use OpenSoutheners\ByteUnitConverter\BinaryByteUnit;
-use OpenSoutheners\ByteUnitConverter\DecimalByteUnit;
-use OpenSoutheners\ByteUnitConverter\ByteUnitConverter;
-
-// Using decimal system
-ByteUnitConverter::from(1, DecimalByteUnit::TB)->to(DecimalByteUnit::GB); // 1000
-ByteUnitConverter::from(1, DecimalByteUnit::TB)->toGB(); // 1000
-ByteUnitConverter::from(1, DecimalByteUnit::TB)->toGigabyte(); // 1000
-ByteUnitConverter::conversion(1, DecimalByteUnit::TB, DecimalByteUnit::GB); // 1000
-
-// Using binary system
-ByteUnitConverter::from(1, BinaryByteUnit::TiB)->to(BinaryByteUnit::GiB); // 1024
-ByteUnitConverter::from(1, BinaryByteUnit::TiB)->toGiB(); // 1024
-ByteUnitConverter::from(1, BinaryByteUnit::TiB)->toGibibyte(); // 1024
-ByteUnitConverter::conversion(1, BinaryByteUnit::TiB, BinaryByteUnit::GiB); // 1024
-```
-
-### Considerations
-
-**We don't use round** or any method to remove extra decimals, **we consider this should be done by the developer using this library** so take this in mind.
-
-Also take in mind the different units within the enums, each one is using different conversion base (check usage).
+[Official documentation](https://docs.opensoutheners.com/byte-unit-converter)
 
 ## Motivation
 
