@@ -13,7 +13,7 @@ namespace OpenSoutheners\ByteUnitConverter;
  *
  * @author Rubén Robles <me@d8vjork.com>
  */
-class ByteUnitConverter
+final class ByteUnitConverter
 {
     private ByteUnit $unit = ByteUnit::B;
 
@@ -25,7 +25,7 @@ class ByteUnitConverter
 
     private bool $unitLabelAsOutput = false;
 
-    final public function __construct(private readonly string $bytes)
+    public function __construct(private readonly string $bytes)
     {
         if (! is_numeric($bytes)) {
             throw new \Exception('Not numeric value as bytes not supported.');
@@ -118,7 +118,7 @@ class ByteUnitConverter
                 continue;
             }
 
-            if ($unit === $stoppingAt || ($this->bytes - $unit->value) >= 0) {
+            if ($unit === $stoppingAt || bcsub($this->bytes, $unit->asNumber(), 0) >= 0) {
                 $nearestUnit = $unit;
             }
         }
