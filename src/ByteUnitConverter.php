@@ -41,7 +41,7 @@ final class ByteUnitConverter
     }
 
     /**
-     * Start converting from specified byte count & unit.
+     * Create new instance converting from value and unit to bytes for conversions.
      */
     public static function from(int|float|string $value, ByteUnit $unit, int $precision = 2): static
     {
