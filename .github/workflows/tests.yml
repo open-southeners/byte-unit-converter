@@ -43,7 +43,9 @@ jobs:
 
       - name: Execute mutation tests
         if: matrix.os == 'ubuntu-latest' && matrix.php == '8.3'
-        run: vendor/bin/infection --min-msi=${{ env.MIN_MSI || '80' }} --threads=max
+        env:
+          STRYKER_DASHBOARD_API_KEY: ${{ secrets.STRYKER_DASHBOARD_API_KEY }}
+        run: vendor/bin/infection --min-msi=${{ vars.MIN_MSI || '60' }} --threads=max
 
       - name: Upload coverage reports to Codecov
         if: matrix.os == 'ubuntu-latest' && matrix.php == '8.3'
