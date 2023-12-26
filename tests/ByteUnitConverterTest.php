@@ -191,4 +191,12 @@ class ByteUnitConverterTest extends TestCase
             (string) ByteUnitConverter::new('1000')->nearestUnit(MetricSystem::Binary, ByteUnit::KiB)
         );
     }
+
+    public function testConversionAsRoundWhenValueIsZeroReturnsAtLeastOneDecimal()
+    {
+        $this->assertEquals(
+            '0.5 KiB',
+            (string) ByteUnitConverter::new(500)->asRound()->toKiB()
+        );
+    }
 }

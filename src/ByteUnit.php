@@ -129,7 +129,7 @@ enum ByteUnit: string
      */
     public function asNumber(): string
     {
-        return number_format((float) $this->value, 0, '.', '');
+        return ByteUnitConverter::numberFormat($this->value);
     }
 
     /**

@@ -60,11 +60,41 @@ final class ByteUnitConverter
             return $value;
         }
 
-        return bcmul(
-            number_format((float) $value, 0, '.', ''),
-            $unit->asNumber(),
-            $precision
+        return bcmul(self::numberFormat($value), $unit->asNumber(), $precision);
+    }
+
+    /**
+     * Like PHP's number_format function but without thousands separator.
+     */
+    public static function numberFormat(string $num, int $decimals = 0): string
+    {
+        return number_format(
+            num: (float) $num,
+            decimals: $decimals,
+            thousands_separator: ''
         );
+    }
+
+    /**
+     * Format numeric string using round by calculated user-input decimals if specified.
+     */
+    private function roundNumericString(string $number): string
+    {
+        if ($this->unit === ByteUnit::B || $this->outputAsRoundNumber) {
+            $decimalPositions = $number[0] === '0' ? 1 : 0;
+        } else {
+            $decimalPositions = (int) strpos(strrev($number), '.');
+        }
+
+        $result = self::numberFormat($number, $decimalPositions);
+
+        if (! $this->outputAsRoundNumber) {
+            return $result;
+        }
+
+        // We cannot guess without performing a number formatting first
+        // and take peek at the result to see if can still be rounded.
+        return str_replace(str_pad('.', ($decimalPositions ?: 1) + 1, '0'), '', $result);
     }
 
     /**
@@ -133,15 +163,11 @@ final class ByteUnitConverter
      */
     public function getValue(): string
     {
-        $value = bcmul($this->dataUnit->value, number_format((float) $this->bytes, 0, '.', ''), 0);
+        $value = bcmul($this->dataUnit->value, self::numberFormat($this->bytes), 0);
 
         $value = bcdiv($value, $this->unit->asNumber(), $this->precision);
 
-        return number_format(
-            num: (float) $value,
-            decimals: $this->unit === ByteUnit::B || $this->outputAsRoundNumber ? 0 : (int) strpos(strrev($value), '.'),
-            thousands_separator: ''
-        );
+        return $this->roundNumericString($value);
     }
 
     /**
