@@ -35,17 +35,17 @@ final class ByteUnitConverter
     /**
      * Create new instance.
      */
-    public static function new(string $bytes): static
+    public static function new(int|string $bytes): static
     {
-        return new static($bytes);
+        return new self((string) $bytes);
     }
 
     /**
      * Start converting from specified byte count & unit.
      */
-    public static function from(string $value, ByteUnit $unit, int $precision = 2): static
+    public static function from(int|float|string $value, ByteUnit $unit, int $precision = 2): static
     {
-        return new static(static::toBytesFromUnit($value, $unit, $precision));
+        return new static(static::toBytesFromUnit((string) $value, $unit, $precision));
     }
 
     /**
