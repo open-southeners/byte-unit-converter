@@ -32,7 +32,8 @@
         "infection/infection": "^0.26",
         "laravel/pint": "^1.13",
         "phpstan/phpstan": "^1.0",
-        "phpunit/phpunit": "^10.0"
+        "phpunit/phpunit": "^10.0",
+        "tomasvotruba/type-coverage": "^0.2"
     },
     "minimum-stability": "dev",
     "autoload": {
