@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2023-12-26
+
+### Added
+
+- `ByteUnitConverter::numberFormat()` static method to be reused within library (although can be used externally)
+
+### Changed
+
+- `ByteUnitConverter::new()` method now accepts strings or integers as input argument
+- `ByteUnitConverter::from()` method now accepts strings, floats or integers as first input argument
+
+### Fixed
+
+- `ByteUnitConverter::asRound()` method now returns zero (0) results with decimals only if results are 0
+
 ## [2.1.0] - 2023-12-25
 
 ### Added
