@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0] - 2024-01-04
+
+### Added
+
+- Introducing operations with `add`, `sub` and `subtract` (**object bytes still immutable**, so new instance of the object will be returned on each operation)
+
+### Changed
+
+- **Breakchange**: Refactor `asRound` method now accepts integer and boolean (**default now is round up to 2 decimal positions if possible**).
+
 ## [2.2.0] - 2023-12-26
 
 ### Added
