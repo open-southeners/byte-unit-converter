@@ -19,9 +19,9 @@ final class ByteUnitConverter
 
     private DataUnit $dataUnit = DataUnit::B;
 
-    private int $precision = 2;
+    private int $precision = 4;
 
-    private bool $outputAsRoundNumber = false;
+    private int|bool $roundAsMuchAs = 2;
 
     private bool $unitLabelAsOutput = false;
 
@@ -45,7 +45,7 @@ final class ByteUnitConverter
      */
     public static function from(int|float|string $value, ByteUnit $unit, int $precision = 2): static
     {
-        return new static(static::toBytesFromUnit((string) $value, $unit, $precision));
+        return new self(static::toBytesFromUnit((string) $value, $unit, $precision));
     }
 
     /**
@@ -60,19 +60,25 @@ final class ByteUnitConverter
             return $value;
         }
 
-        return bcmul(self::numberFormat($value), $unit->asNumber(), $precision);
+        return bcmul($value, $unit->asNumber(), $precision);
     }
 
     /**
      * Like PHP's number_format function but without thousands separator.
      */
-    public static function numberFormat(string $num, int $decimals = 0): string
+    public static function numberFormat(string $number, int $decimals = 0): string
     {
-        return number_format(
-            num: (float) $num,
+        $formattedNumber = number_format(
+            num: (float) $number,
             decimals: $decimals,
             thousands_separator: ''
         );
+
+        if (! str_contains($formattedNumber, '.')) {
+            return $formattedNumber;
+        }
+
+        return rtrim(rtrim($formattedNumber, '0'), '.');
     }
 
     /**
@@ -80,21 +86,35 @@ final class ByteUnitConverter
      */
     private function roundNumericString(string $number): string
     {
-        if ($this->unit === ByteUnit::B || $this->outputAsRoundNumber) {
-            $decimalPositions = $number[0] === '0' ? 1 : 0;
-        } else {
-            $decimalPositions = (int) strpos(strrev($number), '.');
+        [$whole, $decimal] = explode('.', $number) + ['0', ''];
+
+        $numberDecimalPositions = strlen($decimal);
+
+        if (! $this->roundAsMuchAs) {
+            return static::numberFormat($number, $numberDecimalPositions);
         }
 
-        $result = self::numberFormat($number, $decimalPositions);
+        $decimalPositions = $this->roundAsMuchAs === true
+            ? $numberDecimalPositions
+            : $this->roundAsMuchAs;
 
-        if (! $this->outputAsRoundNumber) {
-            return $result;
+        if ($numberDecimalPositions <= $decimalPositions) {
+            return static::numberFormat($number, strspn($decimal, '0') ?: 1);
         }
 
-        // We cannot guess without performing a number formatting first
-        // and take peek at the result to see if can still be rounded.
-        return str_replace(str_pad('.', ($decimalPositions ?: 1) + 1, '0'), '', $result);
+        $firstRound = static::numberFormat($number, $numberDecimalPositions);
+
+        [$firstRoundWhole, $firstRoundDecimal] = explode('.', $firstRound) + ['0', ''];
+
+        $numberDecimalPositions = strlen($firstRoundDecimal);
+
+        if ($numberDecimalPositions <= $decimalPositions) {
+            return $firstRound;
+        }
+
+        $secondRound = static::numberFormat($firstRound, --$numberDecimalPositions);
+
+        return $secondRound > 0 ? $secondRound : $firstRound;
     }
 
     /**
@@ -108,11 +128,13 @@ final class ByteUnitConverter
     }
 
     /**
-     * Round resulting bytes number to have no decimal digits.
+     * Round resulting bytes number to have as near as the specified decimal digits.
+     *
+     * For e.g. asRound(true) = 1, asRound(false) = -1 (all decimals)
      */
-    public function asRound(bool $value = true): self
+    public function asRound(int|bool $value = true): self
     {
-        $this->outputAsRoundNumber = $value;
+        $this->roundAsMuchAs = $value;
 
         return $this;
     }
@@ -132,7 +154,7 @@ final class ByteUnitConverter
     /**
      * Assign nearest bytes unit by metric system from current bytes value.
      */
-    public function nearestUnit(?MetricSystem $metric = MetricSystem::Decimal, ByteUnit $stoppingAt = null): self
+    public function nearestUnit(?MetricSystem $metric = MetricSystem::Decimal, ?ByteUnit $stoppingAt = null): self
     {
         $nearestUnit = null;
         $byteUnits = ByteUnit::cases();
@@ -193,7 +215,7 @@ final class ByteUnitConverter
      */
     public function getValue(): string
     {
-        $value = bcmul($this->dataUnit->value, self::numberFormat($this->bytes), 0);
+        $value = bcmul($this->dataUnit->value, $this->bytes, $this->precision);
 
         $value = bcdiv($value, $this->unit->asNumber(), $this->precision);
 
