@@ -68,7 +68,7 @@ Get new instance from value and unit:
 Reused internally within the library but publicly available.
 {% endhint %}
 
-Format numbers using PHP's [`number_format`](https://www.php.net/manual/en/function.number-format.php) built-in function but removing thousands separator:
+Format numbers using PHP's [`number_format`](https://www.php.net/manual/en/function.number-format.php) built-in function but removing thousands separator and some other improvements:
 
 ```php
 ByteUnitConverter::numberFormat('1000.00', 0); // '1000'
@@ -94,10 +94,34 @@ Customise precision for some conversion operations like divisions:
 
 ### asRound
 
-Round result to a integer without decimals:
+{% hint style="info" %}
+As for v3 this is now accepting integers and booleans as input argument. Defaults to at least 2 decimals if possible.
+{% endhint %}
+
+Round result to a integer with **as less decimals as possible**:
 
 ```php
-(string) ByteUnitConverter::new('500')->asRound()->toKiB(); // '0.5 KiB'
+(string) ByteUnitConverter::new('229829')->toMB(); // '0.23 MB'
+
+(string) ByteUnitConverter::new('229829')->asRound()->toMB(); // '0.2 MB'
+```
+
+Disable any rounding on the result:
+
+```php
+(string) ByteUnitConverter::new('229829')->asRound(false)->toMB(); // '0.2298 MB'
+```
+
+Round as much as possible until reach 3 decimals:
+
+```php
+(string) ByteUnitConverter::new('229829')->asRound(3)->toMB(); // '0.23 MB'
+
+(string) ByteUnitConverter::new('2290829')->asRound(false)->toMB(); // '2.2908 MB'
+
+(string) ByteUnitConverter::new('2290829')->asRound(3)->toMB(); // '2.291 MB'
+
+(string) ByteUnitConverter::new('2290829')->asRound(2)->toMB(); // '2.29 MB'
 ```
 
 ### useUnitLabel
@@ -205,4 +229,24 @@ The `ByteUnitConverter` utility class can be also serialised/deserialised using 
 $serialised = serialize(ByteUnitConverter::new('1000')->toKB()); // 'O:50:"OpenSoutheners\ByteUnitConverter\ByteUnitConverter":3:{s:5:"bytes";s:4:"1000";s:9:"byte_unit";s:3:"1e3";s:9:"data_unit";s:1:"1";}'
 
 unserialize($serialised); // ByteUnitConverter instance
+```
+
+### add
+
+{% hint style="info" %}
+Manipulation methods returns new instances of the `ByteUnitConverter` to remain immutable.
+{% endhint %}
+
+Add quantity of any byte unit to the current instance making a new one:
+
+```php
+ByteUnitConverter::new('1000')->add('1', ByteUnit::KB)->toKB(); // '2 KB'
+```
+
+### subtract
+
+Remove quantity of any byte unit to the current instance making a new one:
+
+```php
+ByteUnitConverter::new('2000')->subtract('1', ByteUnit::KB)->toKB(); // '1 KB
 ```
