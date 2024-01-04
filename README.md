@@ -5,7 +5,7 @@ A utility written in PHP8.1+ to convert multiple-byte units with no dependencies
 
 ## Getting started
 
-```
+```bash
 composer require open-southeners/byte-unit-converter
 ```
 
