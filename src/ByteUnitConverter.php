@@ -159,6 +159,36 @@ final class ByteUnitConverter
     }
 
     /**
+     * Add byte unit quantity to the current returning new instance.
+     */
+    public function add(int|float|string $quantity, ByteUnit $unit): self
+    {
+        return new self(
+            bcadd($this->bytes, static::toBytesFromUnit((string) $quantity, $unit), $this->precision)
+        );
+    }
+
+    /**
+     * Subtract byte unit quantity to the current returning new instance.
+     */
+    public function subtract(int|float|string $quantity, ByteUnit $unit): self
+    {
+        return new self(
+            bcsub($this->bytes, static::toBytesFromUnit((string) $quantity, $unit), $this->precision)
+        );
+    }
+
+    /**
+     * Subtract byte unit quantity to the current returning new instance.
+     *
+     * @codeCoverageIgnore
+     */
+    public function sub(int|float|string $quantity, ByteUnit $unit): self
+    {
+        return $this->subtract($quantity, $unit);
+    }
+
+    /**
      * Get conversion result numeric value.
      */
     public function getValue(): string

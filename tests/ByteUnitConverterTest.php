@@ -199,4 +199,20 @@ class ByteUnitConverterTest extends TestCase
             (string) ByteUnitConverter::new(500)->asRound()->toKiB()
         );
     }
+
+    public function testConversionOfOneMegabyteAddingOneGigabyteResultsInOneThousandOneMegabytes()
+    {
+        $this->assertEquals(
+            '1001 MB',
+            (string) ByteUnitConverter::from(1, ByteUnit::MB)->add('1', ByteUnit::GB)->asRound()->toMB()
+        );
+    }
+
+    public function testConversionOfOneGigabyteSubtractingHalfGigabyteResultsInHalfGigabyte()
+    {
+        $this->assertEquals(
+            '0.5 GB',
+            (string) ByteUnitConverter::from(1, ByteUnit::GB)->subtract(0.5, ByteUnit::GB)->asRound()->toGB()
+        );
+    }
 }
